@@ -24,7 +24,10 @@ bot.on('message', msg => {
       if (words[0] == '!stats-bot'){
         let player = words[1]
         let mode = words[2]
-        let perspective = words[3]
+        let perspective
+        if (mode != 'all'){
+          perspective = words[3]
+        }
         let path = '/shards/pc-eu/players?filter[playerNames]=' + player
         getRequest(path, (raw) => {
           try {
@@ -32,22 +35,26 @@ bot.on('message', msg => {
             let path = '/shards/pc-eu/players/' + id + '/seasons/lifetime'
             getRequest(path, (raw) => {
               let allStats = JSON.parse(raw)
-              if (perspective == 'tpp'){
-                if (mode == 'solo'){
+              if (mode == 'solo'){
+                if (perspective == 'fpp'){
+                  stats = allStats.data.attributes.gameModeStats['solo-fpp']
+                } else if (perspective == 'tpp') {
                   stats = allStats.data.attributes.gameModeStats['solo']
-                } else if (mode == 'duo'){
+                }
+              } else if (mode == 'duo'){
+                if (perspective == 'fpp'){
+                  stats = allStats.data.attributes.gameModeStats['duo-fpp']
+                } else if (perspective == 'tpp'){
                   stats = allStats.data.attributes.gameModeStats['duo']
-                } else if (mode == 'squad'){
+                }
+              } else if (mode =='squad') {
+                if (perspective == 'fpp'){
+                  stats = allStats.data.attributes.gameModeStats['squad-fpp']
+                } else if (perspective == 'tpp'){
                   stats = allStats.data.attributes.gameModeStats['squad']
                 }
-              } else if (perspective == 'fpp'){
-                if (mode == 'solo'){
-                  stats = allStats.data.attributes.gameModeStats['solo-fpp']
-                } else if (mode == 'duo'){
-                  stats = allStats.data.attributes.gameModeStats['duo-fpp']
-                } else if (mode == 'squad'){
-                  stats = allStats.data.attributes.gameModeStats['squad-fpp']
-                }
+              } else if (mode =='all'){
+                stats = makeAll(allStats.data.attributes.gameModeStats)
               }
               msg.channel.send(JSON.stringify(stats).replace(/,|\{|\}/g, '\n').replace(/\"/g, ''))
             })
@@ -93,5 +100,33 @@ getRequest = (path, cb) => {
 
   req.end()
 }
+
+makeAll = (stats) => {
+  let all = {}
+  for (let mode in stats){
+    if (stats.hasOwnProperty(mode)){
+      for (let stat in stats[mode]){
+        if(!all[stat]) {
+          all[stat] = []
+        }
+        all[stat].push(stats[mode][stat])
+      }
+    }
+  }
+  for (let stat in all){
+    toMax = ['bestRankPoint', 'longestKill', 'longestTimeSurvived', 'maxKillStreaks', 'roundMostKills']
+    if (all.hasOwnProperty(stat)){
+      if (toMax.includes(stat)){
+        all[stat] = arrayMax(all[stat])
+      } else {
+        all[stat] = arraySum(all[stat])
+      }
+    }
+  }
+  return all
+}
+
+let arrayMax = array => Math.max(...array)
+let arraySum = array => array.reduce((a, b) => a + b, 0)
 
 bot.login(discordToken);
