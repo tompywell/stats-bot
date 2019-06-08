@@ -1,5 +1,4 @@
 let discord = require('discord.js');
-let auth = require('./auth.json');
 let https = require('https');
 
 let authToken;
