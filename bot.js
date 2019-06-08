@@ -6,15 +6,6 @@ let authToken;
 
 let bot = new discord.Client();
 
-try {
-  let auth = require('./auth.json');
-  discordToken = auth.discord;
-  pubgToken = auth.pubg;
-} catch (err) {
-  discordToken = process.env.DISCORD_AUTH_TOKEN
-  pubgToken = process.env.PUBG_AUTH_TOKEN
-}
-
 bot.on('ready', () => {
   console.log(`Logged in as ${bot.user.tag}!`, 'at', new Date());
 });
@@ -130,5 +121,14 @@ makeAll = (stats) => {
 
 let arrayMax = array => Math.max(...array)
 let arraySum = array => array.reduce((a, b) => a + b, 0)
+
+try {
+  let auth = require('./auth.json');
+  discordToken = auth.discord;
+  pubgToken = auth.pubg;
+} catch (err) {
+  discordToken = process.env.DISCORD_AUTH_TOKEN
+  pubgToken = process.env.PUBG_AUTH_TOKEN
+}
 
 bot.login(discordToken);
